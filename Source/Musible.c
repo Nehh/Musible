@@ -10,9 +10,8 @@ int main (void)
 	
 	LoadConfigFile();
 
-	CreateWindow();
-	
-	CleanGraphics();
+	CreateGraphicEnvironment();
+
     /*
 	
 	for(unsigned int i = LANG_CONFIG_ITEMS; i!=0;)

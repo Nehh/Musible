@@ -1,5 +1,3 @@
-#!/bin/bash
-
 #set -ex
 
 if [ ! -d "./Build" ]; then
@@ -9,7 +7,7 @@ if [ ! -d "./Musible" ]; then
     mkdir Musible
 fi
 cd Musible
-rm -rf ./*
+rm -rf ./Musible
 cd ../Build
 rm -rf ./*
 cmake ..

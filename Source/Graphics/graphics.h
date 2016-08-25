@@ -1,4 +1,5 @@
 #include "environment.h"
+#include "../Utils/mem.h"
 
 GLFWwindow* window;
 

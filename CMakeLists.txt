@@ -97,7 +97,7 @@ set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 
 # Now we get the GLFW package from auto-search
-find_package(glfw3 3.2 REQUIRED)
+find_package(glfw3 3.2.1 REQUIRED)
 find_package(PNG 1.6.23 REQUIRED)
 
 # Linker's about ready, now it's time founding our source code

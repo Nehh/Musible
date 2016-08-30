@@ -10,7 +10,7 @@ int main (void)
 	
 	LoadConfigFile();
 
-	CreateGraphicEnvironment();
+	CreateGraphicEnvironment(&MW);
 
     /*
 	
@@ -26,7 +26,6 @@ int main (void)
 	printf("%s\n", (char *)CONFIG[CFG_TITLE]);
 	
 	SaveConfigFile();*/
-	CleanGraphics();
 	
 	UnloadLanguage(&LANG_CONFIG);
 	

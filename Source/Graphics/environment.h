@@ -2,9 +2,9 @@
 #include <GLFW/glfw3.h>
 
 typedef struct {
-	VkImage image;
-	VkCommandBuffer cmd;
-	VkImageView view;
+	VkImage								image;
+	VkCommandBuffer						cmd;
+	VkImageView							view;
 } SwapchainBuffers;
 	
 typedef struct {
@@ -39,15 +39,10 @@ typedef struct {
 	uint32_t							swapchainImageCount;
 	uint32_t							currentBuffer;
 	
-	/** 我们暂时还用不到Depth这个用来创建三维空间深度的东西
-	struct {
-        VkFormat format;
-
-        VkImage image;
-        VkDeviceMemory mem;
-        VkImageView view;
-    } depth;
-    **/
+	VkRenderPass						renderPass;
+    VkPipeline							pipeline;
+	VkPipelineCache						pipelineCache;
+	VkPipelineLayout					pipelineLayout;
 	
 	VkCommandPool						commandPool;
 	VkCommandBuffer						setupCommand;	// Command Buffer for initialization commands

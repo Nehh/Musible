@@ -1,4 +1,16 @@
 TODO:
+#Simple FPS Counter
+=	High Level FPS Counter(and avg. counter)
+>Simple Framerate Limiter
+	(seems framerate not sync with render line, just pass this session)
+	Vertical Sync Support
+Simple Triangle Using Vertex
+	Vertex Buffer Control
+Simple PNG Image Using STB
+	PNG sprite manager
+Simple Button Area ???
+	Dynamic Clickable Area Manager
+
 创建动态贴图列表
 资源回收问题
 研究Shader

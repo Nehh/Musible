@@ -1,7 +1,5 @@
-#define _DEFAULT_SOURCE
 #include "../Config/config.h"
 #include "graphics.h"
-#include <unistd.h>
 
 int CreateInstance(GI *);
 int LoadDefaultPhysicalDevice(GI *);
@@ -41,10 +39,21 @@ int CreateWindow(GI * vk)
 
 int StartRenderLoop(GI * vk)
 {
+	double ns,ls;
+	int fps = 0;
+	char fpss[32];
+	ls = glfwGetTime();
 	while(!glfwWindowShouldClose(window)) {
         glfwPollEvents();
 		ApplyDisplay(vk);
-		usleep(100000u);
+		ns = glfwGetTime();
+		fps++;
+		if((ns - ls) >= 1.0) {
+			sprintf(fpss, "%d", fps);
+			glfwSetWindowTitle(window, fpss);
+			ls = ns;
+			fps = 0;
+		}
     }
     vkDeviceWaitIdle(vk->device);
     CleanGraphics(vk);

@@ -8,8 +8,6 @@
 #ifndef __GLK_MATRIX_STACK_H
 #define __GLK_MATRIX_STACK_H
 
-#include <CoreFoundation/CoreFoundation.h>
-
 #include <GLKit/GLKMathTypes.h>
 
 #ifdef __cplusplus
@@ -28,12 +26,12 @@ typedef struct _GLKMatrixStack *GLKMatrixStackRef;
  CFType GLKMatrixStack creation routine. Pass NULL or kCFAllocatorDefault to use the current default
  allocator. A newly created stack is initialized with the identity matrix.
  */
-GLKMatrixStackRef GLKMatrixStackCreate(CFAllocatorRef alloc);
+//GLKMatrixStackRef GLKMatrixStackCreate(CFAllocatorRef alloc);
 
 /*
  Returns the type identifier for the GLKMatrixStack opaque type.
  */
-CFTypeID GLKMatrixStackGetTypeID(void);
+//CFTypeID GLKMatrixStackGetTypeID(void);
 
 /*
  Pushes all of the matrices down one level and copies the topmost matrix.

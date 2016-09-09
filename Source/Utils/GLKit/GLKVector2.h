@@ -20,10 +20,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-    
-#pragma mark -
-#pragma mark Prototypes
-#pragma mark -
 
 static __inline__ GLKVector2 GLKVector2Make(float x, float y);
 static __inline__ GLKVector2 GLKVector2MakeWithArray(float values[2]);
@@ -86,14 +82,10 @@ static __inline__ GLKVector2 GLKVector2Lerp(GLKVector2 vectorStart, GLKVector2 v
  Project the vector, vectorToProject, onto the vector, projectionVector.
  */
 static __inline__ GLKVector2 GLKVector2Project(GLKVector2 vectorToProject, GLKVector2 projectionVector);
-
-#pragma mark -
-#pragma mark Implementations
-#pragma mark -
     
 static __inline__ GLKVector2 GLKVector2Make(float x, float y)
 {
-    GLKVector2 v = { x, y };
+    GLKVector2 v = {{ x, y }};
     return v;
 }
     
@@ -103,7 +95,7 @@ static __inline__ GLKVector2 GLKVector2MakeWithArray(float values[2])
     float32x2_t v = vld1_f32(values);
     return *(GLKVector2 *)&v;
 #else
-    GLKVector2 v = { values[0], values[1] };
+    GLKVector2 v = {{ values[0], values[1] }};
     return v;
 #endif
 }
@@ -114,7 +106,7 @@ static __inline__ GLKVector2 GLKVector2Negate(GLKVector2 vector)
     float32x2_t v = vneg_f32(*(float32x2_t *)&vector);
     return *(GLKVector2 *)&v;
 #else
-    GLKVector2 v = { -vector.v[0] , -vector.v[1] };
+    GLKVector2 v = {{ -vector.v[0] , -vector.v[1] }};
     return v;
 #endif
 }
@@ -126,8 +118,8 @@ static __inline__ GLKVector2 GLKVector2Add(GLKVector2 vectorLeft, GLKVector2 vec
                              *(float32x2_t *)&vectorRight);
     return *(GLKVector2 *)&v;
 #else
-    GLKVector2 v = { vectorLeft.v[0] + vectorRight.v[0],
-                     vectorLeft.v[1] + vectorRight.v[1] };
+    GLKVector2 v = {{ vectorLeft.v[0] + vectorRight.v[0],
+                     vectorLeft.v[1] + vectorRight.v[1] }};
     return v;
 #endif
 }
@@ -139,8 +131,8 @@ static __inline__ GLKVector2 GLKVector2Subtract(GLKVector2 vectorLeft, GLKVector
                              *(float32x2_t *)&vectorRight);
     return *(GLKVector2 *)&v;
 #else
-    GLKVector2 v = { vectorLeft.v[0] - vectorRight.v[0],
-                     vectorLeft.v[1] - vectorRight.v[1] };
+    GLKVector2 v = {{ vectorLeft.v[0] - vectorRight.v[0],
+                     vectorLeft.v[1] - vectorRight.v[1] }};
     return v;
 #endif
 }
@@ -152,8 +144,8 @@ static __inline__ GLKVector2 GLKVector2Multiply(GLKVector2 vectorLeft, GLKVector
                              *(float32x2_t *)&vectorRight);
     return *(GLKVector2 *)&v;
 #else
-    GLKVector2 v = { vectorLeft.v[0] * vectorRight.v[0],
-                     vectorLeft.v[1] * vectorRight.v[1] };
+    GLKVector2 v = {{ vectorLeft.v[0] * vectorRight.v[0],
+                     vectorLeft.v[1] * vectorRight.v[1] }};
     return v;
 #endif
 }
@@ -169,8 +161,8 @@ static __inline__ GLKVector2 GLKVector2Divide(GLKVector2 vectorLeft, GLKVector2 
     float32x2_t v = vmul_f32(*vLeft, estimate);
     return *(GLKVector2 *)&v;
 #else
-    GLKVector2 v = { vectorLeft.v[0] / vectorRight.v[0],
-                     vectorLeft.v[1] / vectorRight.v[1] };
+    GLKVector2 v = {{ vectorLeft.v[0] / vectorRight.v[0],
+                     vectorLeft.v[1] / vectorRight.v[1] }};
     return v;
 #endif
 }
@@ -182,8 +174,8 @@ static __inline__ GLKVector2 GLKVector2AddScalar(GLKVector2 vector, float value)
                              vdup_n_f32((float32_t)value));
     return *(GLKVector2 *)&v;
 #else
-    GLKVector2 v = { vector.v[0] + value,
-                     vector.v[1] + value };
+    GLKVector2 v = {{ vector.v[0] + value,
+                     vector.v[1] + value }};
     return v;
 #endif
 }
@@ -195,8 +187,8 @@ static __inline__ GLKVector2 GLKVector2SubtractScalar(GLKVector2 vector, float v
                              vdup_n_f32((float32_t)value));
     return *(GLKVector2 *)&v;
 #else    
-    GLKVector2 v = { vector.v[0] - value,
-                     vector.v[1] - value };
+    GLKVector2 v = {{ vector.v[0] - value,
+                     vector.v[1] - value }};
     return v;
 #endif
 }
@@ -208,8 +200,8 @@ static __inline__ GLKVector2 GLKVector2MultiplyScalar(GLKVector2 vector, float v
                              vdup_n_f32((float32_t)value));
     return *(GLKVector2 *)&v;
 #else
-    GLKVector2 v = { vector.v[0] * value,
-                     vector.v[1] * value };
+    GLKVector2 v = {{ vector.v[0] * value,
+                     vector.v[1] * value }};
     return v;
 #endif
 }
@@ -224,8 +216,8 @@ static __inline__ GLKVector2 GLKVector2DivideScalar(GLKVector2 vector, float val
     float32x2_t v = vmul_f32(*(float32x2_t *)&vector, estimate);
     return *(GLKVector2 *)&v;
 #else
-    GLKVector2 v = { vector.v[0] / value,
-                     vector.v[1] / value };
+    GLKVector2 v = {{ vector.v[0] / value,
+                     vector.v[1] / value }};
     return v;
 #endif
 }
@@ -415,8 +407,8 @@ static __inline__ GLKVector2 GLKVector2Lerp(GLKVector2 vectorStart, GLKVector2 v
     float32x2_t v = vadd_f32(*(float32x2_t *)&vectorStart, vDiff);
     return *(GLKVector2 *)&v;
 #else
-    GLKVector2 v = { vectorStart.v[0] + ((vectorEnd.v[0] - vectorStart.v[0]) * t),
-                     vectorStart.v[1] + ((vectorEnd.v[1] - vectorStart.v[1]) * t) };
+    GLKVector2 v = {{ vectorStart.v[0] + ((vectorEnd.v[0] - vectorStart.v[0]) * t),
+                     vectorStart.v[1] + ((vectorEnd.v[1] - vectorStart.v[1]) * t) }};
     return v;
 #endif
 }

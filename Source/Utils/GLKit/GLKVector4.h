@@ -20,10 +20,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#pragma mark -
-#pragma mark Prototypes
-#pragma mark -
     
 static __inline__ GLKVector4 GLKVector4Make(float x, float y, float z, float w);
 static __inline__ GLKVector4 GLKVector4MakeWithArray(float values[4]);
@@ -92,14 +88,10 @@ static __inline__ GLKVector4 GLKVector4CrossProduct(GLKVector4 vectorLeft, GLKVe
  Project the vector, vectorToProject, onto the vector, projectionVector.
  */
 static __inline__ GLKVector4 GLKVector4Project(GLKVector4 vectorToProject, GLKVector4 projectionVector);
-
-#pragma mark -
-#pragma mark Implementations
-#pragma mark -
     
 static __inline__ GLKVector4 GLKVector4Make(float x, float y, float z, float w)
 {
-    GLKVector4 v = { x, y, z, w };
+    GLKVector4 v = {{ x, y, z, w }};
     return v;
 }
 
@@ -109,14 +101,14 @@ static __inline__ GLKVector4 GLKVector4MakeWithArray(float values[4])
     float32x4_t v = vld1q_f32(values);
     return *(GLKVector4 *)&v;
 #else
-    GLKVector4 v = { values[0], values[1], values[2], values[3] };
+    GLKVector4 v = {{ values[0], values[1], values[2], values[3] }};
     return v;
 #endif
 }
     
 static __inline__ GLKVector4 GLKVector4MakeWithVector3(GLKVector3 vector, float w)
 {
-    GLKVector4 v = { vector.v[0], vector.v[1], vector.v[2], w };
+    GLKVector4 v = {{ vector.v[0], vector.v[1], vector.v[2], w }};
     return v;
 }
     
@@ -126,7 +118,7 @@ static __inline__ GLKVector4 GLKVector4Negate(GLKVector4 vector)
     float32x4_t v = vnegq_f32(*(float32x4_t *)&vector);
     return *(GLKVector4 *)&v;
 #else
-    GLKVector4 v = { -vector.v[0], -vector.v[1], -vector.v[2], -vector.v[3] };
+    GLKVector4 v = {{ -vector.v[0], -vector.v[1], -vector.v[2], -vector.v[3] }};
     return v;
 #endif
 }
@@ -138,10 +130,10 @@ static __inline__ GLKVector4 GLKVector4Add(GLKVector4 vectorLeft, GLKVector4 vec
                               *(float32x4_t *)&vectorRight);
     return *(GLKVector4 *)&v;
 #else
-    GLKVector4 v = { vectorLeft.v[0] + vectorRight.v[0],
+    GLKVector4 v = {{ vectorLeft.v[0] + vectorRight.v[0],
                      vectorLeft.v[1] + vectorRight.v[1],
                      vectorLeft.v[2] + vectorRight.v[2],
-                     vectorLeft.v[3] + vectorRight.v[3] };
+                     vectorLeft.v[3] + vectorRight.v[3] }};
     return v;
 #endif
 }
@@ -153,10 +145,10 @@ static __inline__ GLKVector4 GLKVector4Subtract(GLKVector4 vectorLeft, GLKVector
                               *(float32x4_t *)&vectorRight);
     return *(GLKVector4 *)&v;
 #else
-    GLKVector4 v = { vectorLeft.v[0] - vectorRight.v[0],
+    GLKVector4 v = {{ vectorLeft.v[0] - vectorRight.v[0],
                      vectorLeft.v[1] - vectorRight.v[1],
                      vectorLeft.v[2] - vectorRight.v[2],
-                     vectorLeft.v[3] - vectorRight.v[3] };
+                     vectorLeft.v[3] - vectorRight.v[3] }};
     return v;
 #endif
 }
@@ -168,10 +160,10 @@ static __inline__ GLKVector4 GLKVector4Multiply(GLKVector4 vectorLeft, GLKVector
                               *(float32x4_t *)&vectorRight);
     return *(GLKVector4 *)&v;
 #else
-    GLKVector4 v = { vectorLeft.v[0] * vectorRight.v[0],
+    GLKVector4 v = {{ vectorLeft.v[0] * vectorRight.v[0],
                      vectorLeft.v[1] * vectorRight.v[1],
                      vectorLeft.v[2] * vectorRight.v[2],
-                     vectorLeft.v[3] * vectorRight.v[3] };
+                     vectorLeft.v[3] * vectorRight.v[3] }};
     return v;
 #endif
 }
@@ -187,10 +179,10 @@ static __inline__ GLKVector4 GLKVector4Divide(GLKVector4 vectorLeft, GLKVector4 
     float32x4_t v = vmulq_f32(*vLeft, estimate);
     return *(GLKVector4 *)&v;
 #else
-    GLKVector4 v = { vectorLeft.v[0] / vectorRight.v[0],
+    GLKVector4 v = {{ vectorLeft.v[0] / vectorRight.v[0],
                      vectorLeft.v[1] / vectorRight.v[1],
                      vectorLeft.v[2] / vectorRight.v[2],
-                     vectorLeft.v[3] / vectorRight.v[3] };
+                     vectorLeft.v[3] / vectorRight.v[3] }};
     return v;
 #endif
 }
@@ -202,10 +194,10 @@ static __inline__ GLKVector4 GLKVector4AddScalar(GLKVector4 vector, float value)
                               vdupq_n_f32((float32_t)value));
     return *(GLKVector4 *)&v;
 #else
-    GLKVector4 v = { vector.v[0] + value,
+    GLKVector4 v = {{ vector.v[0] + value,
                      vector.v[1] + value,
                      vector.v[2] + value,
-                     vector.v[3] + value };
+                     vector.v[3] + value }};
     return v;
 #endif
 }
@@ -217,10 +209,10 @@ static __inline__ GLKVector4 GLKVector4SubtractScalar(GLKVector4 vector, float v
                               vdupq_n_f32((float32_t)value));
     return *(GLKVector4 *)&v;
 #else
-    GLKVector4 v = { vector.v[0] - value,
+    GLKVector4 v = {{ vector.v[0] - value,
                      vector.v[1] - value,
                      vector.v[2] - value,
-                     vector.v[3] - value };
+                     vector.v[3] - value }};
     return v;
 #endif
 }
@@ -232,10 +224,10 @@ static __inline__ GLKVector4 GLKVector4MultiplyScalar(GLKVector4 vector, float v
                               vdupq_n_f32((float32_t)value));
     return *(GLKVector4 *)&v;
 #else
-    GLKVector4 v = { vector.v[0] * value,
+    GLKVector4 v = {{ vector.v[0] * value,
                      vector.v[1] * value,
                      vector.v[2] * value,
-                     vector.v[3] * value };
+                     vector.v[3] * value }};
     return v;   
 #endif
 }
@@ -250,10 +242,10 @@ static __inline__ GLKVector4 GLKVector4DivideScalar(GLKVector4 vector, float val
     float32x4_t v = vmulq_f32(*(float32x4_t *)&vector, estimate);
     return *(GLKVector4 *)&v;
 #else
-    GLKVector4 v = { vector.v[0] / value,
+    GLKVector4 v = {{ vector.v[0] / value,
                      vector.v[1] / value,
                      vector.v[2] / value,
-                     vector.v[3] / value };
+                     vector.v[3] / value }};
     return v;
 #endif
 }
@@ -477,20 +469,20 @@ static __inline__ GLKVector4 GLKVector4Lerp(GLKVector4 vectorStart, GLKVector4 v
     float32x4_t v = vaddq_f32(*(float32x4_t *)&vectorStart, vDiff);
     return *(GLKVector4 *)&v;
 #else
-    GLKVector4 v = { vectorStart.v[0] + ((vectorEnd.v[0] - vectorStart.v[0]) * t),
+    GLKVector4 v = {{ vectorStart.v[0] + ((vectorEnd.v[0] - vectorStart.v[0]) * t),
                      vectorStart.v[1] + ((vectorEnd.v[1] - vectorStart.v[1]) * t),
                      vectorStart.v[2] + ((vectorEnd.v[2] - vectorStart.v[2]) * t),
-                     vectorStart.v[3] + ((vectorEnd.v[3] - vectorStart.v[3]) * t) };
+                     vectorStart.v[3] + ((vectorEnd.v[3] - vectorStart.v[3]) * t) }};
     return v;
 #endif
 }
     
 static __inline__ GLKVector4 GLKVector4CrossProduct(GLKVector4 vectorLeft, GLKVector4 vectorRight)
 {
-    GLKVector4 v = { vectorLeft.v[1] * vectorRight.v[2] - vectorLeft.v[2] * vectorRight.v[1],
+    GLKVector4 v = {{ vectorLeft.v[1] * vectorRight.v[2] - vectorLeft.v[2] * vectorRight.v[1],
                      vectorLeft.v[2] * vectorRight.v[0] - vectorLeft.v[0] * vectorRight.v[2],
                      vectorLeft.v[0] * vectorRight.v[1] - vectorLeft.v[1] * vectorRight.v[0],
-                     0.0f };
+                     0.0f }};
     return v;
 }
     

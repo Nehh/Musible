@@ -10,6 +10,8 @@ get_filename_component(VULKAN_SDK "$ENV{VULKAN_SDK}" ABSOLUTE)
 get_filename_component(INC_DIR "${VULKAN_SDK}/include" ABSOLUTE)
 get_filename_component(BIN_DIR "${VULKAN_SDK}/bin" ABSOLUTE)
 
+get_filename_component(GLK_DIR "${PROJECT_SOURCE_DIR}/Source/Utils" ABSOLUTE)
+
 get_filename_component(STB_DIR "$ENV{HOME}/development/stb-master" ABSOLUTE)
 
 # Create a Global Variable in project let vulkan know other file's directory
@@ -56,7 +58,7 @@ set(VK_INCLUDE_DIRS ${VK_INCLUDE_DIRS} "${INC_DIR}")
 # Give a message to Command for checking directorys
 message("\n")
 message("INC_DIR = ${INC_DIR}")
-message("STB_DIR = ${STB_DIR}")
+message("GLK_DIR = ${GLK_DIR}")
 message("\n")
 
 # We have to include which Vulkan wants to include
@@ -65,6 +67,7 @@ include_directories (
     ${X11_INCLUDE_DIRS}
     ${PROJECT_BINARY_DIR}
     ${INC_DIR}
+    ${GLK_DIR}
     ${STB_DIR}
 )
 

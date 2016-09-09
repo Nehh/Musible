@@ -14,7 +14,6 @@ int PrepareSwapChain(GI *);
 	int CreateLogicalDevice(GI *);
 int PrepareCommandPool(GI *);
 int PrepareBuffers(GI *);
-int PrepareDepth(GI *);
 
 int PrepareDescriptorLayout(GI *);
 int PrepareRenderPass(GI *);
@@ -26,6 +25,21 @@ int PrepareCommandBuffer(GI *);
 
 int BuildRawCommand(GI *);
 int ApplyDisplay(GI *);
+void ResizeWindow(GLFWwindow*, int, int);
+int Resize(GI * vk);
+
+/**
+ * temp
+ */
+struct Vertex {
+	GLKVector2 pos;
+	GLKVector3 color;
+};
+const struct Vertex vertices[3] = {
+    {{{0.0f, -0.5f}}, {{1.0f, 0.0f, 0.0f}}},
+    {{{0.5f, 0.5f}}, {{0.0f, 1.0f, 0.0f}}},
+    {{{-0.5f, 0.5f}}, {{0.0f, 0.0f, 1.0f}}}
+};
 
 int CreateWindow(GI * vk)
 {
@@ -34,6 +48,9 @@ int CreateWindow(GI * vk)
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     window = glfwCreateWindow(*(int *)CONFIG[CFG_GAME_WIDTH], *(int *)CONFIG[CFG_GAME_HEIGHT], (char *)CONFIG[CFG_TITLE], NULL, NULL);
     
+	//glfwSetWindowUserPointer(window, this);
+	glfwSetWindowSizeCallback(window, &ResizeWindow);
+	
     return 0;
 }
 
@@ -44,10 +61,13 @@ int StartRenderLoop(GI * vk)
 	char fpss[32];
 	ls = glfwGetTime();
 	while(!glfwWindowShouldClose(window)) {
-        glfwPollEvents();
-		ApplyDisplay(vk);
+        glfwWaitEvents();
+		if(ApplyDisplay(vk)==(-10)){
+			Resize(vk);
+		}
 		ns = glfwGetTime();
 		fps++;
+		fpss[0] = 0;
 		if((ns - ls) >= 1.0) {
 			sprintf(fpss, "%d", fps);
 			glfwSetWindowTitle(window, fpss);
@@ -87,6 +107,59 @@ int CreateGraphicEnvironment(GI * vk)
 	
 	StartRenderLoop(vk);
 	
+	return 0;
+}
+
+void ResizeWindow(GLFWwindow * win_handle, int winwidth, int winheight)
+{
+	if (winwidth == 0 || winheight == 0) return;
+	MW.width = winwidth;
+	MW.height = winheight;
+	//Resize(&MW);
+}
+
+int Resize(GI * vk)
+{
+	uint32_t i;
+	vkDeviceWaitIdle(vk->device);
+	
+	free(vk->framebuffers);
+    //vkDestroyDescriptorPool(vk->device, vk->desc_pool, NULL);
+
+    if (vk->setupCommand) {
+        vkFreeCommandBuffers(vk->device, vk->commandPool, 1, &vk->setupCommand);
+    }
+    vkFreeCommandBuffers(vk->device, vk->commandPool, 1, &vk->drawCommand);
+    vkDestroyCommandPool(vk->device, vk->commandPool, NULL);
+
+    vkDestroyPipeline(vk->device, vk->pipeline, NULL);
+    vkDestroyRenderPass(vk->device, vk->renderPass, NULL);
+    vkDestroyPipelineLayout(vk->device, vk->pipelineLayout, NULL);
+    //vkDestroyDescriptorSetLayout(vk->device, vk->desc_layout, NULL);
+
+    //vkDestroyBuffer(vk->device, vk->vertices.buf, NULL);
+    //vkFreeMemory(vk->device, vk->vertices.mem, NULL);
+
+    /*for (i = 0; i < DEMO_TEXTURE_COUNT; i++) {
+        vkDestroyImageView(vk->device, vk->textures[i].view, NULL);
+        vkDestroyImage(vk->device, vk->textures[i].image, NULL);
+        vkFreeMemory(vk->device, vk->textures[i].mem, NULL);
+        vkDestroySampler(vk->device, vk->textures[i].sampler, NULL);
+    }*/
+
+    for (i = 0; i < vk->swapchainImageCount; i++) {
+        vkDestroyImageView(vk->device, vk->buffers[i].view, NULL);
+    }
+/*
+    vkDestroyImageView(vk->device, vk->depth.view, NULL);
+    vkDestroyImage(vk->device, vk->depth.image, NULL);
+    vkFreeMemory(vk->device, vk->depth.mem, NULL);
+*/
+    free(vk->buffers);
+
+    // Second, re-perform the vk_prepare() function, which will re-create the
+    // swapchain:
+    PrepareBackground(vk);
 	return 0;
 }
 
@@ -893,5 +966,56 @@ int BuildRawCommand(GI * vk)
     vkCmdEndRenderPass(vk->drawCommand);
 
     if(vkEndCommandBuffer(vk->drawCommand) != VK_SUCCESS) return -1;
+	return 0;
+}
+
+uint32_t findMemoryType(GI * vk,uint32_t typeFilter, VkMemoryPropertyFlags properties) {
+        VkPhysicalDeviceMemoryProperties memProperties;
+        vkGetPhysicalDeviceMemoryProperties(vk->gpu, &memProperties);
+
+        for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
+            if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties) {
+                return i;
+            }
+        }
+
+        exit(-1);
+    }
+
+
+int createImage(GI * vk, uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage image, VkDeviceMemory imageMemory) {
+    VkImageCreateInfo imageInfo = {
+		.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
+		.imageType = VK_IMAGE_TYPE_2D,
+		.extent.width = width,
+		.extent.height = height,
+		.extent.depth = 1,
+		.mipLevels = 1,
+		.arrayLayers = 1,
+		.format = format,
+		.tiling = tiling,
+		.initialLayout = VK_IMAGE_LAYOUT_PREINITIALIZED,
+		.usage = usage,
+		.samples = VK_SAMPLE_COUNT_1_BIT,
+		.sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+	};
+
+    if (vkCreateImage(vk->device, &imageInfo, NULL, &image) != VK_SUCCESS) {
+        return -1;
+    }
+
+    VkMemoryRequirements memRequirements;
+    vkGetImageMemoryRequirements(vk->device, image, &memRequirements);
+
+    VkMemoryAllocateInfo allocInfo = {};
+    allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    allocInfo.allocationSize = memRequirements.size;
+    allocInfo.memoryTypeIndex = findMemoryType(vk, memRequirements.memoryTypeBits, properties);
+
+    if (vkAllocateMemory(vk->device, &allocInfo, NULL, &imageMemory) != VK_SUCCESS) {
+        return -1;
+    }
+
+    vkBindImageMemory(vk->device, image, imageMemory, 0);
 	return 0;
 }

@@ -24,10 +24,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#pragma mark -
-#pragma mark Prototypes
-#pragma mark -
     
 extern const GLKMatrix4 GLKMatrix4Identity;
 
@@ -208,19 +204,15 @@ static __inline__ GLKVector4 GLKMatrix4MultiplyVector4(GLKMatrix4 matrixLeft, GL
 
 static __inline__ void GLKMatrix4MultiplyVector4Array(GLKMatrix4 matrix, GLKVector4 *vectors, size_t vectorCount);
 
-#pragma mark -
-#pragma mark Implementations
-#pragma mark -
-    
 static __inline__ GLKMatrix4 GLKMatrix4Make(float m00, float m01, float m02, float m03,
                                             float m10, float m11, float m12, float m13,
                                             float m20, float m21, float m22, float m23,
                                             float m30, float m31, float m32, float m33)
 {
-    GLKMatrix4 m = { m00, m01, m02, m03,
+    GLKMatrix4 m = {{ m00, m01, m02, m03,
                      m10, m11, m12, m13,
                      m20, m21, m22, m23,
-                     m30, m31, m32, m33 };
+                     m30, m31, m32, m33 }};
     return m;
 }
 
@@ -229,19 +221,19 @@ static __inline__ GLKMatrix4 GLKMatrix4MakeAndTranspose(float m00, float m01, fl
                                                         float m20, float m21, float m22, float m23,
                                                         float m30, float m31, float m32, float m33)
 {
-    GLKMatrix4 m = { m00, m10, m20, m30,
+    GLKMatrix4 m = {{ m00, m10, m20, m30,
                      m01, m11, m21, m31,
                      m02, m12, m22, m32,
-                     m03, m13, m23, m33 };
+                     m03, m13, m23, m33 }};
     return m;
 }
     
 static __inline__ GLKMatrix4 GLKMatrix4MakeWithArray(float values[16])
 {
-    GLKMatrix4 m = { values[0], values[1], values[2], values[3],
+    GLKMatrix4 m = {{ values[0], values[1], values[2], values[3],
                      values[4], values[5], values[6], values[7],
                      values[8], values[9], values[10], values[11],
-                     values[12], values[13], values[14], values[15] };
+                     values[12], values[13], values[14], values[15] }};
     return m;
 }
  
@@ -251,10 +243,10 @@ static __inline__ GLKMatrix4 GLKMatrix4MakeWithArrayAndTranspose(float values[16
     float32x4x4_t m = vld4q_f32(values);
     return *(GLKMatrix4 *)&m;
 #else
-    GLKMatrix4 m = { values[0], values[4], values[8], values[12],
+    GLKMatrix4 m = {{ values[0], values[4], values[8], values[12],
                      values[1], values[5], values[9], values[13],
                      values[2], values[6], values[10], values[14],
-                     values[3], values[7], values[11], values[15] };
+                     values[3], values[7], values[11], values[15] }};
     return m;
 #endif
 }
@@ -264,10 +256,10 @@ static __inline__ GLKMatrix4 GLKMatrix4MakeWithRows(GLKVector4 row0,
                                                     GLKVector4 row2,
                                                     GLKVector4 row3)
 {
-    GLKMatrix4 m = { row0.v[0], row1.v[0], row2.v[0], row3.v[0],
+    GLKMatrix4 m = {{ row0.v[0], row1.v[0], row2.v[0], row3.v[0],
                      row0.v[1], row1.v[1], row2.v[1], row3.v[1],
                      row0.v[2], row1.v[2], row2.v[2], row3.v[2],
-                     row0.v[3], row1.v[3], row2.v[3], row3.v[3] };
+                     row0.v[3], row1.v[3], row2.v[3], row3.v[3] }};
     return m;
 }
 
@@ -284,10 +276,10 @@ static __inline__ GLKMatrix4 GLKMatrix4MakeWithColumns(GLKVector4 column0,
     m.val[3] = vld1q_f32(column3.v);
     return *(GLKMatrix4 *)&m;
 #else
-    GLKMatrix4 m = { column0.v[0], column0.v[1], column0.v[2], column0.v[3],
+    GLKMatrix4 m = {{ column0.v[0], column0.v[1], column0.v[2], column0.v[3],
                      column1.v[0], column1.v[1], column1.v[2], column1.v[3],
                      column2.v[0], column2.v[1], column2.v[2], column2.v[3],
-                     column3.v[0], column3.v[1], column3.v[2], column3.v[3] };
+                     column3.v[0], column3.v[1], column3.v[2], column3.v[3] }};
     return m;
 #endif
 }
@@ -306,7 +298,7 @@ static __inline__ GLKMatrix4 GLKMatrix4MakeWithQuaternion(GLKQuaternion quaterni
     float _2z = z + z;
     float _2w = w + w;
     
-    GLKMatrix4 m = { 1.0f - _2y * y - _2z * z,
+    GLKMatrix4 m = {{ 1.0f - _2y * y - _2z * z,
                      _2x * y + _2w * z,
                      _2x * z - _2w * y,
                      0.0f,
@@ -321,7 +313,7 @@ static __inline__ GLKMatrix4 GLKMatrix4MakeWithQuaternion(GLKQuaternion quaterni
                      0.0f,
                      0.0f,
                      0.0f,
-                     1.0f };
+                     1.0f }};
     
     return m;
 }
@@ -351,7 +343,7 @@ static __inline__ GLKMatrix4 GLKMatrix4MakeRotation(float radians, float x, floa
     float cosp = 1.0f - cos;
     float sin = sinf(radians);
     
-    GLKMatrix4 m = { cos + cosp * v.v[0] * v.v[0],
+    GLKMatrix4 m = {{ cos + cosp * v.v[0] * v.v[0],
                      cosp * v.v[0] * v.v[1] + v.v[2] * sin,
                      cosp * v.v[0] * v.v[2] - v.v[1] * sin,
                      0.0f,
@@ -366,7 +358,7 @@ static __inline__ GLKMatrix4 GLKMatrix4MakeRotation(float radians, float x, floa
                      0.0f,
                      0.0f,
                      0.0f,
-                     1.0f };
+                     1.0f }};
 
     return m;
 }
@@ -376,10 +368,10 @@ static __inline__ GLKMatrix4 GLKMatrix4MakeXRotation(float radians)
     float cos = cosf(radians);
     float sin = sinf(radians);
     
-    GLKMatrix4 m = { 1.0f, 0.0f, 0.0f, 0.0f,
+    GLKMatrix4 m = {{ 1.0f, 0.0f, 0.0f, 0.0f,
                      0.0f, cos, sin, 0.0f,
                      0.0f, -sin, cos, 0.0f,
-                     0.0f, 0.0f, 0.0f, 1.0f };
+                     0.0f, 0.0f, 0.0f, 1.0f }};
     
     return m;
 }
@@ -389,10 +381,10 @@ static __inline__ GLKMatrix4 GLKMatrix4MakeYRotation(float radians)
     float cos = cosf(radians);
     float sin = sinf(radians);
     
-    GLKMatrix4 m = { cos, 0.0f, -sin, 0.0f,
+    GLKMatrix4 m = {{ cos, 0.0f, -sin, 0.0f,
                      0.0f, 1.0f, 0.0f, 0.0f,
                      sin, 0.0f, cos, 0.0f,
-                     0.0f, 0.0f, 0.0f, 1.0f };
+                     0.0f, 0.0f, 0.0f, 1.0f }};
     
     return m;
 }
@@ -402,10 +394,10 @@ static __inline__ GLKMatrix4 GLKMatrix4MakeZRotation(float radians)
     float cos = cosf(radians);
     float sin = sinf(radians);
     
-    GLKMatrix4 m = { cos, sin, 0.0f, 0.0f,
+    GLKMatrix4 m = {{ cos, sin, 0.0f, 0.0f,
                      -sin, cos, 0.0f, 0.0f,
                      0.0f, 0.0f, 1.0f, 0.0f,
-                     0.0f, 0.0f, 0.0f, 1.0f };
+                     0.0f, 0.0f, 0.0f, 1.0f }};
     
     return m;
 }
@@ -414,10 +406,10 @@ static __inline__ GLKMatrix4 GLKMatrix4MakePerspective(float fovyRadians, float 
 {
     float cotan = 1.0f / tanf(fovyRadians / 2.0f);
     
-    GLKMatrix4 m = { cotan / aspect, 0.0f, 0.0f, 0.0f,
+    GLKMatrix4 m = {{ cotan / aspect, 0.0f, 0.0f, 0.0f,
                      0.0f, cotan, 0.0f, 0.0f,
                      0.0f, 0.0f, (farZ + nearZ) / (nearZ - farZ), -1.0f,
-                     0.0f, 0.0f, (2.0f * farZ * nearZ) / (nearZ - farZ), 0.0f };
+                     0.0f, 0.0f, (2.0f * farZ * nearZ) / (nearZ - farZ), 0.0f }};
     
     return m;
 }
@@ -433,10 +425,10 @@ static __inline__ GLKMatrix4 GLKMatrix4MakeFrustum(float left, float right,
     float fan = farZ + nearZ;
     float fsn = farZ - nearZ;
     
-    GLKMatrix4 m = { 2.0f * nearZ / rsl, 0.0f, 0.0f, 0.0f,
+    GLKMatrix4 m = {{ 2.0f * nearZ / rsl, 0.0f, 0.0f, 0.0f,
                      0.0f, 2.0f * nearZ / tsb, 0.0f, 0.0f,
                      ral / rsl, tab / tsb, -fan / fsn, -1.0f,
-                     0.0f, 0.0f, (-2.0f * farZ * nearZ) / fsn, 0.0f };
+                     0.0f, 0.0f, (-2.0f * farZ * nearZ) / fsn, 0.0f }};
     
     return m;
 }
@@ -452,10 +444,10 @@ static __inline__ GLKMatrix4 GLKMatrix4MakeOrtho(float left, float right,
     float fan = farZ + nearZ;
     float fsn = farZ - nearZ;
     
-    GLKMatrix4 m = { 2.0f / rsl, 0.0f, 0.0f, 0.0f,
+    GLKMatrix4 m = {{ 2.0f / rsl, 0.0f, 0.0f, 0.0f,
                      0.0f, 2.0f / tsb, 0.0f, 0.0f,
                      0.0f, 0.0f, -2.0f / fsn, 0.0f,
-                     -ral / rsl, -tab / tsb, -fan / fsn, 1.0f };
+                     -ral / rsl, -tab / tsb, -fan / fsn, 1.0f }};
                      
     return m;
 }
@@ -464,42 +456,42 @@ static __inline__ GLKMatrix4 GLKMatrix4MakeLookAt(float eyeX, float eyeY, float 
                                                   float centerX, float centerY, float centerZ,
                                                   float upX, float upY, float upZ)
 {
-    GLKVector3 ev = { eyeX, eyeY, eyeZ };
-    GLKVector3 cv = { centerX, centerY, centerZ };
-    GLKVector3 uv = { upX, upY, upZ };
+    GLKVector3 ev = {{ eyeX, eyeY, eyeZ }};
+    GLKVector3 cv = {{ centerX, centerY, centerZ }};
+    GLKVector3 uv = {{ upX, upY, upZ }};
     GLKVector3 n = GLKVector3Normalize(GLKVector3Add(ev, GLKVector3Negate(cv)));
     GLKVector3 u = GLKVector3Normalize(GLKVector3CrossProduct(uv, n));
     GLKVector3 v = GLKVector3CrossProduct(n, u);
     
-    GLKMatrix4 m = { u.v[0], v.v[0], n.v[0], 0.0f,
+    GLKMatrix4 m = {{ u.v[0], v.v[0], n.v[0], 0.0f,
                      u.v[1], v.v[1], n.v[1], 0.0f,
                      u.v[2], v.v[2], n.v[2], 0.0f,
                      GLKVector3DotProduct(GLKVector3Negate(u), ev),
                      GLKVector3DotProduct(GLKVector3Negate(v), ev),
                      GLKVector3DotProduct(GLKVector3Negate(n), ev),
-                     1.0f };
+                     1.0f }};
     
     return m;
 }
   
 static __inline__ GLKMatrix3 GLKMatrix4GetMatrix3(GLKMatrix4 matrix)
 {
-    GLKMatrix3 m = { matrix.m[0], matrix.m[1], matrix.m[2],
+    GLKMatrix3 m = {{ matrix.m[0], matrix.m[1], matrix.m[2],
                      matrix.m[4], matrix.m[5], matrix.m[6],
-                     matrix.m[8], matrix.m[9], matrix.m[10] };
+                     matrix.m[8], matrix.m[9], matrix.m[10] }};
     return m;
 }
 
 static __inline__ GLKMatrix2 GLKMatrix4GetMatrix2(GLKMatrix4 matrix)
 {
-    GLKMatrix2 m = { matrix.m[0], matrix.m[1],
-                     matrix.m[4], matrix.m[5] };
+    GLKMatrix2 m = {{ matrix.m[0], matrix.m[1],
+                     matrix.m[4], matrix.m[5] }};
     return m;
 }
 
 static __inline__ GLKVector4 GLKMatrix4GetRow(GLKMatrix4 matrix, int row)
 {
-    GLKVector4 v = { matrix.m[row], matrix.m[4 + row], matrix.m[8 + row], matrix.m[12 + row] };
+    GLKVector4 v = {{ matrix.m[row], matrix.m[4 + row], matrix.m[8 + row], matrix.m[12 + row] }};
     return v;
 }
 
@@ -509,7 +501,7 @@ static __inline__ GLKVector4 GLKMatrix4GetColumn(GLKMatrix4 matrix, int column)
     float32x4_t v = vld1q_f32(&(matrix.m[column * 4]));
     return *(GLKVector4 *)&v;
 #else
-    GLKVector4 v = { matrix.m[column * 4 + 0], matrix.m[column * 4 + 1], matrix.m[column * 4 + 2], matrix.m[column * 4 + 3] };
+    GLKVector4 v = {{ matrix.m[column * 4 + 0], matrix.m[column * 4 + 1], matrix.m[column * 4 + 2], matrix.m[column * 4 + 3] }};
     return v;
 #endif
 }
@@ -546,10 +538,10 @@ static __inline__ GLKMatrix4 GLKMatrix4Transpose(GLKMatrix4 matrix)
     float32x4x4_t m = vld4q_f32(matrix.m);
     return *(GLKMatrix4 *)&m;
 #else
-    GLKMatrix4 m = { matrix.m[0], matrix.m[4], matrix.m[8], matrix.m[12],
+    GLKMatrix4 m = {{ matrix.m[0], matrix.m[4], matrix.m[8], matrix.m[12],
                      matrix.m[1], matrix.m[5], matrix.m[9], matrix.m[13],
                      matrix.m[2], matrix.m[6], matrix.m[10], matrix.m[14],
-                     matrix.m[3], matrix.m[7], matrix.m[11], matrix.m[15] };
+                     matrix.m[3], matrix.m[7], matrix.m[11], matrix.m[15] }};
     return m;
 #endif
 }
@@ -691,37 +683,37 @@ static __inline__ GLKMatrix4 GLKMatrix4Subtract(GLKMatrix4 matrixLeft, GLKMatrix
     
 static __inline__ GLKMatrix4 GLKMatrix4Translate(GLKMatrix4 matrix, float tx, float ty, float tz)
 {
-    GLKMatrix4 m = { matrix.m[0], matrix.m[1], matrix.m[2], matrix.m[3],
+    GLKMatrix4 m = {{ matrix.m[0], matrix.m[1], matrix.m[2], matrix.m[3],
                      matrix.m[4], matrix.m[5], matrix.m[6], matrix.m[7],
                      matrix.m[8], matrix.m[9], matrix.m[10], matrix.m[11],
                      matrix.m[0] * tx + matrix.m[4] * ty + matrix.m[8] * tz + matrix.m[12],
                      matrix.m[1] * tx + matrix.m[5] * ty + matrix.m[9] * tz + matrix.m[13],
                      matrix.m[2] * tx + matrix.m[6] * ty + matrix.m[10] * tz + matrix.m[14],
-                     matrix.m[15] };
+                     matrix.m[15] }};
     return m;
 }
  
 static __inline__ GLKMatrix4 GLKMatrix4TranslateWithVector3(GLKMatrix4 matrix, GLKVector3 translationVector)
 {
-    GLKMatrix4 m = { matrix.m[0], matrix.m[1], matrix.m[2], matrix.m[3],
+    GLKMatrix4 m = {{ matrix.m[0], matrix.m[1], matrix.m[2], matrix.m[3],
                      matrix.m[4], matrix.m[5], matrix.m[6], matrix.m[7],
                      matrix.m[8], matrix.m[9], matrix.m[10], matrix.m[11],
                      matrix.m[0] * translationVector.v[0] + matrix.m[4] * translationVector.v[1] + matrix.m[8] * translationVector.v[2] + matrix.m[12],
                      matrix.m[1] * translationVector.v[0] + matrix.m[5] * translationVector.v[1] + matrix.m[9] * translationVector.v[2] + matrix.m[13],
                      matrix.m[2] * translationVector.v[0] + matrix.m[6] * translationVector.v[1] + matrix.m[10] * translationVector.v[2] + matrix.m[14],
-                     matrix.m[15] };
+                     matrix.m[15] }};
     return m;
 }
     
 static __inline__ GLKMatrix4 GLKMatrix4TranslateWithVector4(GLKMatrix4 matrix, GLKVector4 translationVector)
 {
-    GLKMatrix4 m = { matrix.m[0], matrix.m[1], matrix.m[2], matrix.m[3],
+    GLKMatrix4 m = {{ matrix.m[0], matrix.m[1], matrix.m[2], matrix.m[3],
                      matrix.m[4], matrix.m[5], matrix.m[6], matrix.m[7],
                      matrix.m[8], matrix.m[9], matrix.m[10], matrix.m[11],
                      matrix.m[0] * translationVector.v[0] + matrix.m[4] * translationVector.v[1] + matrix.m[8] * translationVector.v[2] + matrix.m[12],
                      matrix.m[1] * translationVector.v[0] + matrix.m[5] * translationVector.v[1] + matrix.m[9] * translationVector.v[2] + matrix.m[13],
                      matrix.m[2] * translationVector.v[0] + matrix.m[6] * translationVector.v[1] + matrix.m[10] * translationVector.v[2] + matrix.m[14],
-                     matrix.m[15] };
+                     matrix.m[15] }};
     return m;
 }
     
@@ -738,10 +730,10 @@ static __inline__ GLKMatrix4 GLKMatrix4Scale(GLKMatrix4 matrix, float sx, float 
     
     return *(GLKMatrix4 *)&m;
 #else
-    GLKMatrix4 m = { matrix.m[0] * sx, matrix.m[1] * sx, matrix.m[2] * sx, matrix.m[3] * sx,
+    GLKMatrix4 m = {{ matrix.m[0] * sx, matrix.m[1] * sx, matrix.m[2] * sx, matrix.m[3] * sx,
                      matrix.m[4] * sy, matrix.m[5] * sy, matrix.m[6] * sy, matrix.m[7] * sy,
                      matrix.m[8] * sz, matrix.m[9] * sz, matrix.m[10] * sz, matrix.m[11] * sz,
-                     matrix.m[12], matrix.m[13], matrix.m[14], matrix.m[15] };
+                     matrix.m[12], matrix.m[13], matrix.m[14], matrix.m[15] }};
     return m;
 #endif
 }
@@ -759,10 +751,10 @@ static __inline__ GLKMatrix4 GLKMatrix4ScaleWithVector3(GLKMatrix4 matrix, GLKVe
     
     return *(GLKMatrix4 *)&m;
 #else
-    GLKMatrix4 m = { matrix.m[0] * scaleVector.v[0], matrix.m[1] * scaleVector.v[0], matrix.m[2] * scaleVector.v[0], matrix.m[3] * scaleVector.v[0],
+    GLKMatrix4 m = {{ matrix.m[0] * scaleVector.v[0], matrix.m[1] * scaleVector.v[0], matrix.m[2] * scaleVector.v[0], matrix.m[3] * scaleVector.v[0],
                      matrix.m[4] * scaleVector.v[1], matrix.m[5] * scaleVector.v[1], matrix.m[6] * scaleVector.v[1], matrix.m[7] * scaleVector.v[1],
                      matrix.m[8] * scaleVector.v[2], matrix.m[9] * scaleVector.v[2], matrix.m[10] * scaleVector.v[2], matrix.m[11] * scaleVector.v[2],
-                     matrix.m[12], matrix.m[13], matrix.m[14], matrix.m[15] };
+                     matrix.m[12], matrix.m[13], matrix.m[14], matrix.m[15] }};
     return m;
 #endif
 }
@@ -780,10 +772,10 @@ static __inline__ GLKMatrix4 GLKMatrix4ScaleWithVector4(GLKMatrix4 matrix, GLKVe
     
     return *(GLKMatrix4 *)&m;
 #else
-    GLKMatrix4 m = { matrix.m[0] * scaleVector.v[0], matrix.m[1] * scaleVector.v[0], matrix.m[2] * scaleVector.v[0], matrix.m[3] * scaleVector.v[0],
+    GLKMatrix4 m = {{ matrix.m[0] * scaleVector.v[0], matrix.m[1] * scaleVector.v[0], matrix.m[2] * scaleVector.v[0], matrix.m[3] * scaleVector.v[0],
                      matrix.m[4] * scaleVector.v[1], matrix.m[5] * scaleVector.v[1], matrix.m[6] * scaleVector.v[1], matrix.m[7] * scaleVector.v[1],
                      matrix.m[8] * scaleVector.v[2], matrix.m[9] * scaleVector.v[2], matrix.m[10] * scaleVector.v[2], matrix.m[11] * scaleVector.v[2],
-                     matrix.m[12], matrix.m[13], matrix.m[14], matrix.m[15] };
+                     matrix.m[12], matrix.m[13], matrix.m[14], matrix.m[15] }};
     return m;
 #endif
 }
@@ -881,10 +873,10 @@ static __inline__ GLKVector4 GLKMatrix4MultiplyVector4(GLKMatrix4 matrixLeft, GL
     
     return *(GLKVector4 *)&v;
 #else
-    GLKVector4 v = { matrixLeft.m[0] * vectorRight.v[0] + matrixLeft.m[4] * vectorRight.v[1] + matrixLeft.m[8] * vectorRight.v[2] + matrixLeft.m[12] * vectorRight.v[3],
+    GLKVector4 v = {{ matrixLeft.m[0] * vectorRight.v[0] + matrixLeft.m[4] * vectorRight.v[1] + matrixLeft.m[8] * vectorRight.v[2] + matrixLeft.m[12] * vectorRight.v[3],
                      matrixLeft.m[1] * vectorRight.v[0] + matrixLeft.m[5] * vectorRight.v[1] + matrixLeft.m[9] * vectorRight.v[2] + matrixLeft.m[13] * vectorRight.v[3],
                      matrixLeft.m[2] * vectorRight.v[0] + matrixLeft.m[6] * vectorRight.v[1] + matrixLeft.m[10] * vectorRight.v[2] + matrixLeft.m[14] * vectorRight.v[3],
-                     matrixLeft.m[3] * vectorRight.v[0] + matrixLeft.m[7] * vectorRight.v[1] + matrixLeft.m[11] * vectorRight.v[2] + matrixLeft.m[15] * vectorRight.v[3] };
+                     matrixLeft.m[3] * vectorRight.v[0] + matrixLeft.m[7] * vectorRight.v[1] + matrixLeft.m[11] * vectorRight.v[2] + matrixLeft.m[15] * vectorRight.v[3] }};
     return v;
 #endif
 }

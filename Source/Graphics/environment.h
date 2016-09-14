@@ -47,6 +47,15 @@ typedef struct {
 	VkCommandPool						commandPool;
 	VkCommandBuffer						setupCommand;	// Command Buffer for initialization commands
     VkCommandBuffer						drawCommand;	// Command Buffer for drawing commands
+    
+    struct {
+        VkBuffer buf;
+        VkDeviceMemory mem;
+
+        VkPipelineVertexInputStateCreateInfo vi;
+        VkVertexInputBindingDescription vi_bindings[1];
+        VkVertexInputAttributeDescription vi_attrs[2];
+    } vertices;
 }GI;	//Graphic Interface
 
 GI MW;	//Main Window

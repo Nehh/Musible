@@ -1,3 +1,6 @@
+#ifndef __STRICT_ANSI__
+	#define __STRICT_ANSI__
+#endif
 #include "../Config/config.h"
 #include "graphics.h"
 
@@ -16,6 +19,7 @@ int PrepareCommandPool(GI *);
 int PrepareBuffers(GI *);
 
 int PrepareDescriptorLayout(GI *);
+int PrepareVertices(GI * vk);
 int PrepareRenderPass(GI *);
 int PreparePipeline(GI *);
 int PrepareFramebuffers(GI *);
@@ -27,6 +31,7 @@ int BuildRawCommand(GI *);
 int ApplyDisplay(GI *);
 void ResizeWindow(GLFWwindow*, int, int);
 int Resize(GI * vk);
+uint32_t findMemoryType(GI *,uint32_t, VkMemoryPropertyFlags);
 
 /**
  * temp
@@ -40,6 +45,65 @@ const struct Vertex vertices[3] = {
     {{{0.5f, 0.5f}}, {{0.0f, 1.0f, 0.0f}}},
     {{{-0.5f, 0.5f}}, {{0.0f, 0.0f, 1.0f}}}
 };
+int PrepareVertices(GI * vk)
+{
+	VkMemoryRequirements mem_reqs;
+	void *data;
+	
+	const VkBufferCreateInfo buf_info = {
+		.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+		.pNext = NULL,
+		.size = sizeof(vertices),
+		.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+		.flags = 0,
+	};
+	
+	if (vkCreateBuffer(vk->device, &buf_info, NULL, &vk->vertices.buf) != VK_SUCCESS) return -1;
+	vkGetBufferMemoryRequirements(vk->device, vk->vertices.buf, &mem_reqs);
+	
+	VkMemoryAllocateInfo mem_alloc = {
+		.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
+		.pNext = NULL,
+		.allocationSize = 0,
+		.memoryTypeIndex = findMemoryType(vk, mem_reqs.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT),
+	};
+	
+	mem_alloc.allocationSize = mem_reqs.size;
+	
+	if(vkAllocateMemory(vk->device, &mem_alloc, NULL, &vk->vertices.mem) != VK_SUCCESS) return -1;
+
+    if(vkMapMemory(vk->device, vk->vertices.mem, 0, mem_alloc.allocationSize, 0, &data) != VK_SUCCESS) return -1;
+
+    memcpy(data, vertices, sizeof(vertices));
+
+    vkUnmapMemory(vk->device, vk->vertices.mem);
+
+    if(vkBindBufferMemory(vk->device, vk->vertices.buf,vk->vertices.mem, 0) != VK_SUCCESS) return -1;
+	
+	vk->vertices.vi.sType =
+        VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+    vk->vertices.vi.pNext = NULL;
+    vk->vertices.vi.vertexBindingDescriptionCount = 1;
+    vk->vertices.vi.pVertexBindingDescriptions = vk->vertices.vi_bindings;
+    vk->vertices.vi.vertexAttributeDescriptionCount = 2;
+    vk->vertices.vi.pVertexAttributeDescriptions = vk->vertices.vi_attrs;
+
+    vk->vertices.vi_bindings[0].binding = 0;
+    vk->vertices.vi_bindings[0].stride = sizeof(struct Vertex);
+    vk->vertices.vi_bindings[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+
+    vk->vertices.vi_attrs[0].binding = 0;
+    vk->vertices.vi_attrs[0].location = 0;
+    vk->vertices.vi_attrs[0].format = VK_FORMAT_R32G32_SFLOAT;
+    vk->vertices.vi_attrs[0].offset = offsetof(struct Vertex, pos);
+
+    vk->vertices.vi_attrs[1].binding = 0;
+    vk->vertices.vi_attrs[1].location = 1;
+    vk->vertices.vi_attrs[1].format = VK_FORMAT_R32G32B32_SFLOAT;
+    vk->vertices.vi_attrs[1].offset = offsetof(struct Vertex, color);
+	
+    return 0;
+}
 
 int CreateWindow(GI * vk)
 {
@@ -86,6 +150,7 @@ int PrepareBackground(GI * vk)
 	PrepareCommandPool(vk);
 	PrepareBuffers(vk);
 	PrepareDescriptorLayout(vk);
+	PrepareVertices(vk);
 	PrepareRenderPass(vk);
 	CreatePipeline(vk);
 	PrepareFramebuffers(vk);
@@ -924,7 +989,7 @@ int BuildRawCommand(GI * vk)
 
     // We can use LAYOUT_UNDEFINED as a wildcard here because we don't care what
     // happens to the previous contents of the image
-    VkImageMemoryBarrier image_memory_barrier = {
+    /*VkImageMemoryBarrier image_memory_barrier = {
         .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
         .pNext = NULL,
         .srcAccessMask = 0,
@@ -934,11 +999,11 @@ int BuildRawCommand(GI * vk)
         .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
         .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
         .image = vk->buffers[vk->currentBuffer].image,
-        .subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1}};
+        .subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1}};*/
 
-    vkCmdPipelineBarrier(vk->drawCommand, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+    /*vkCmdPipelineBarrier(vk->drawCommand, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
                          VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, NULL, 0,
-                         NULL, 1, &image_memory_barrier);
+                         NULL, 1, &image_memory_barrier);*/
     vkCmdBeginRenderPass(vk->drawCommand, &rp_begin, VK_SUBPASS_CONTENTS_INLINE);
     vkCmdBindPipeline(vk->drawCommand, VK_PIPELINE_BIND_POINT_GRAPHICS, vk->pipeline);
     //vkCmdBindDescriptorSets(vk->drawCommand, VK_PIPELINE_BIND_POINT_GRAPHICS, vk->pipelineLayout, 0, 1, &vk->desc_set, 0, NULL);
@@ -959,8 +1024,8 @@ int BuildRawCommand(GI * vk)
     scissor.offset.y = 0;
     vkCmdSetScissor(vk->drawCommand, 0, 1, &scissor);
 
-    //VkDeviceSize offsets[1] = {0};
-    //vkCmdBindVertexBuffers(vk->drawCommand, VERTEX_BUFFER_BIND_ID, 1, &vk->vertices.buf, offsets);
+    VkDeviceSize offsets[1] = {0};
+    vkCmdBindVertexBuffers(vk->drawCommand, 0, 1, &vk->vertices.buf, offsets);
 
     vkCmdDraw(vk->drawCommand, 3, 1, 0, 0);
     vkCmdEndRenderPass(vk->drawCommand);
@@ -970,17 +1035,18 @@ int BuildRawCommand(GI * vk)
 }
 
 uint32_t findMemoryType(GI * vk,uint32_t typeFilter, VkMemoryPropertyFlags properties) {
-        VkPhysicalDeviceMemoryProperties memProperties;
-        vkGetPhysicalDeviceMemoryProperties(vk->gpu, &memProperties);
+	VkPhysicalDeviceMemoryProperties memProperties;
+	vkGetPhysicalDeviceMemoryProperties(vk->gpu, &memProperties);//丢到环境里
 
-        for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
-            if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties) {
-                return i;
-            }
-        }
+	for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
+		if ((memProperties.memoryTypes[i].propertyFlags & properties) == properties) {
+			return i;
+		}
+		typeFilter >>= 1;
+	}
 
-        exit(-1);
-    }
+	exit(-1);
+}
 
 
 int createImage(GI * vk, uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage image, VkDeviceMemory imageMemory) {

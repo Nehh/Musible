@@ -2,7 +2,7 @@
 #include <GLKit/GLKMath.h>
 #include "../Utils/mem.h"
 
-GLFWwindow* window;
+GLFWwindow * window;
 
 int CreateWindow();
 int CreateGraphicEnvironment();

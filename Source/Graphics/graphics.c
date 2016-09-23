@@ -1,6 +1,3 @@
-#ifndef __STRICT_ANSI__
-	#define __STRICT_ANSI__
-#endif
 #include "../Config/config.h"
 #include "graphics.h"
 
@@ -16,7 +13,7 @@ int PrepareBackground(GI *);
 int PrepareSwapChain(GI *);
 	int CreateLogicalDevice(GI *);
 int PrepareCommandPool(GI *);
-int PrepareBuffers(GI *);
+int PrepareExchange(GI *);
 
 int PrepareDescriptorLayout(GI *);
 int PrepareVertices(GI * vk);
@@ -30,55 +27,52 @@ int PrepareCommandBuffer(GI *);
 int BuildRawCommand(GI *);
 int ApplyDisplay(GI *);
 void ResizeWindow(GLFWwindow*, int, int);
-int Resize(GI * vk);
-uint32_t findMemoryType(GI *,uint32_t, VkMemoryPropertyFlags);
+int Resize(GI *);
+int FlushSetupCommand(GI *);
+
+uint32_t FindMemoryType(GI *,uint32_t, VkMemoryPropertyFlags);
+int CreateBuffer(GI *, VkDeviceSize, VkBufferUsageFlags, VkMemoryPropertyFlags, VkBuffer *, VkDeviceMemory *);
+int CopyBuffer(GI *,VkBuffer *, VkBuffer *, VkDeviceSize);
 
 /**
  * temp
  */
-struct Vertex {
+typedef struct vtx {
 	GLKVector2 pos;
 	GLKVector3 color;
-};
-const struct Vertex vertices[3] = {
-    {{{0.0f, -0.5f}}, {{1.0f, 0.0f, 0.0f}}},
-    {{{0.5f, 0.5f}}, {{0.0f, 1.0f, 0.0f}}},
-    {{{-0.5f, 0.5f}}, {{0.0f, 0.0f, 1.0f}}}
+} Vertex;
+const Vertex tri_ver[4] = {
+    {{{-0.5f, -0.5f}}, {{1.0f, 0.0f, 0.0f}}},
+    {{{0.5f, -0.5f}}, {{0.0f, 1.0f, 0.0f}}},
+    {{{0.5f, 0.5f}}, {{0.0f, 0.0f, 1.0f}}},
+    {{{-0.5f, 0.5f}}, {{1.0f, 1.0f, 1.0f}}},
 };
 int PrepareVertices(GI * vk)
 {
-	VkMemoryRequirements mem_reqs;
-	void *data;
+	void * data;
+	VkBuffer staging_buffer;
+	VkDeviceMemory staging_buffer_memory;
+	VkDeviceSize buffer_size = sizeof(tri_ver);
+	memset(&vk->vertices, 0, sizeof(vk->vertices));
 	
-	const VkBufferCreateInfo buf_info = {
-		.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
-		.pNext = NULL,
-		.size = sizeof(vertices),
-		.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-		.flags = 0,
-	};
-	
-	if (vkCreateBuffer(vk->device, &buf_info, NULL, &vk->vertices.buf) != VK_SUCCESS) return -1;
-	vkGetBufferMemoryRequirements(vk->device, vk->vertices.buf, &mem_reqs);
-	
-	VkMemoryAllocateInfo mem_alloc = {
-		.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
-		.pNext = NULL,
-		.allocationSize = 0,
-		.memoryTypeIndex = findMemoryType(vk, mem_reqs.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT),
-	};
-	
-	mem_alloc.allocationSize = mem_reqs.size;
-	
-	if(vkAllocateMemory(vk->device, &mem_alloc, NULL, &vk->vertices.mem) != VK_SUCCESS) return -1;
+	CreateBuffer(vk, buffer_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &staging_buffer, &staging_buffer_memory);
 
-    if(vkMapMemory(vk->device, vk->vertices.mem, 0, mem_alloc.allocationSize, 0, &data) != VK_SUCCESS) return -1;
+    if(vkMapMemory(vk->device, staging_buffer_memory, 0, buffer_size, 0, &data) != VK_SUCCESS) return -1;
 
-    memcpy(data, vertices, sizeof(vertices));
+    memcpy(data, tri_ver, buffer_size);
 
-    vkUnmapMemory(vk->device, vk->vertices.mem);
-
-    if(vkBindBufferMemory(vk->device, vk->vertices.buf,vk->vertices.mem, 0) != VK_SUCCESS) return -1;
+    vkUnmapMemory(vk->device, staging_buffer_memory);
+	
+	CreateBuffer(vk, buffer_size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &vk->vertices.buf, &vk->vertices.mem);
+	
+	CopyBuffer(vk, &staging_buffer, &vk->vertices.buf, buffer_size);
+	
+	vkDestroyBuffer(vk->device, staging_buffer, NULL);
+    vkFreeMemory(vk->device, staging_buffer_memory, NULL);
+	
+	/**
+	 * 我们还需要提供Shader的创建信息用以识别shader结构
+	 */
 	
 	vk->vertices.vi.sType =
         VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
@@ -89,18 +83,18 @@ int PrepareVertices(GI * vk)
     vk->vertices.vi.pVertexAttributeDescriptions = vk->vertices.vi_attrs;
 
     vk->vertices.vi_bindings[0].binding = 0;
-    vk->vertices.vi_bindings[0].stride = sizeof(struct Vertex);
+    vk->vertices.vi_bindings[0].stride = sizeof(Vertex);
     vk->vertices.vi_bindings[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
     vk->vertices.vi_attrs[0].binding = 0;
     vk->vertices.vi_attrs[0].location = 0;
     vk->vertices.vi_attrs[0].format = VK_FORMAT_R32G32_SFLOAT;
-    vk->vertices.vi_attrs[0].offset = offsetof(struct Vertex, pos);
+    vk->vertices.vi_attrs[0].offset = offsetof(Vertex, pos);
 
     vk->vertices.vi_attrs[1].binding = 0;
     vk->vertices.vi_attrs[1].location = 1;
     vk->vertices.vi_attrs[1].format = VK_FORMAT_R32G32B32_SFLOAT;
-    vk->vertices.vi_attrs[1].offset = offsetof(struct Vertex, color);
+    vk->vertices.vi_attrs[1].offset = offsetof(Vertex, color);
 	
     return 0;
 }
@@ -148,7 +142,7 @@ int PrepareBackground(GI * vk)
 {
 	PrepareSwapChain(vk);
 	PrepareCommandPool(vk);
-	PrepareBuffers(vk);
+	PrepareExchange(vk);
 	PrepareDescriptorLayout(vk);
 	PrepareVertices(vk);
 	PrepareRenderPass(vk);
@@ -180,7 +174,7 @@ void ResizeWindow(GLFWwindow * win_handle, int winwidth, int winheight)
 	if (winwidth == 0 || winheight == 0) return;
 	MW.width = winwidth;
 	MW.height = winheight;
-	//Resize(&MW);
+	Resize(&MW);
 }
 
 int Resize(GI * vk)
@@ -188,6 +182,9 @@ int Resize(GI * vk)
 	uint32_t i;
 	vkDeviceWaitIdle(vk->device);
 	
+	for (i = 0; i < vk->swapchainImageCount; i++) {
+        vkDestroyFramebuffer(vk->device, vk->framebuffers[i], NULL);
+    }
 	free(vk->framebuffers);
     //vkDestroyDescriptorPool(vk->device, vk->desc_pool, NULL);
 
@@ -202,8 +199,8 @@ int Resize(GI * vk)
     vkDestroyPipelineLayout(vk->device, vk->pipelineLayout, NULL);
     //vkDestroyDescriptorSetLayout(vk->device, vk->desc_layout, NULL);
 
-    //vkDestroyBuffer(vk->device, vk->vertices.buf, NULL);
-    //vkFreeMemory(vk->device, vk->vertices.mem, NULL);
+    vkDestroyBuffer(vk->device, vk->vertices.buf, NULL);
+    vkFreeMemory(vk->device, vk->vertices.mem, NULL);
 
     /*for (i = 0; i < DEMO_TEXTURE_COUNT; i++) {
         vkDestroyImageView(vk->device, vk->textures[i].view, NULL);
@@ -272,7 +269,18 @@ int CleanGraphics(GI * vk)
 
 int CreateInstance(GI * vk)
 {	
+	
 	vk->extensions = glfwGetRequiredInstanceExtensions(&vk->extensionCount);
+	uint32_t layer_count = 0;
+	VkLayerProperties * validation_layers = NULL;
+	const char *validation_layer_names[] = {
+        "VK_LAYER_LUNARG_standard_validation"
+    };
+#ifndef NDEBUG
+	if(vkEnumerateInstanceLayerProperties(&layer_count,NULL) != VK_SUCCESS) return -1;
+	validation_layers = malloc(sizeof(VkLayerProperties) * layer_count);
+	if(vkEnumerateInstanceLayerProperties(&layer_count,validation_layers) != VK_SUCCESS) return -1;
+#endif
 	
 	VkApplicationInfo appInfo = {
 		.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
@@ -286,8 +294,8 @@ int CreateInstance(GI * vk)
 		.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
 		.pNext = NULL,
 		.pApplicationInfo = &appInfo,
-		.enabledLayerCount = 0,
-		.ppEnabledLayerNames = NULL,
+		.enabledLayerCount = 1,//layer_count,
+		.ppEnabledLayerNames = validation_layer_names,
 		.enabledExtensionCount = vk->extensionCount,
 		.ppEnabledExtensionNames = vk->extensions,
 	};
@@ -508,7 +516,7 @@ int PrepareCommandPool(GI * vk)
 	return 0;
 }
 
-int PrepareBuffers(GI * vk)
+int PrepareExchange(GI * vk)
 {
 	VkSwapchainKHR oldSwapchain = vk->swapchain;
 
@@ -672,8 +680,8 @@ int PrepareRenderPass(GI * vk)
 					.storeOp = VK_ATTACHMENT_STORE_OP_STORE,
 					.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
 					.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
-					.initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-					.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+					.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+					.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
 				},
 	};
 	const VkAttachmentReference color_reference = {
@@ -693,6 +701,13 @@ int PrepareRenderPass(GI * vk)
 		.preserveAttachmentCount = 0,
 		.pPreserveAttachments = NULL,
 	};
+	VkSubpassDependency dependency = {};
+	dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+	dependency.dstSubpass = 0;
+	dependency.srcStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+	dependency.srcAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+	dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 
 	const VkRenderPassCreateInfo rp_info = {
 		.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
@@ -701,8 +716,8 @@ int PrepareRenderPass(GI * vk)
 		.pAttachments = attachments,
 		.subpassCount = 1,
 		.pSubpasses = &subpass,
-		.dependencyCount = 0,
-		.pDependencies = NULL,
+		.dependencyCount = 1,
+		.pDependencies = &dependency,
 	};
 
 	if(vkCreateRenderPass(vk->device, &rp_info, NULL, &vk->renderPass) != VK_SUCCESS)return -1;
@@ -743,13 +758,7 @@ int CreatePipeline(GI * vk)
     shaderStages[1].module = fragShaderModule;
     shaderStages[1].pName = "main";
     
-    VkPipelineVertexInputStateCreateInfo vertexInputInfo = {
-		.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
-		.vertexBindingDescriptionCount = 0,
-		.pVertexBindingDescriptions = NULL, // Optional
-		.vertexAttributeDescriptionCount = 0,
-		.pVertexAttributeDescriptions = NULL,
-	};
+    VkPipelineVertexInputStateCreateInfo vertexInputInfo = vk->vertices.vi;
 	
 	VkPipelineInputAssemblyStateCreateInfo inputAssembly = {
 		.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
@@ -903,7 +912,7 @@ int ApplyDisplay(GI * vk)
 	// that the image won't be rendered to until the presentation
 	// engine has fully released ownership to the application, and it is
 	// okay to render to the image.
-
+	FlushSetupCommand(vk);
 	BuildRawCommand(vk);
 	VkFence nullFence = VK_NULL_HANDLE;
 	VkPipelineStageFlags pipe_stage_flags = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
@@ -935,7 +944,7 @@ int ApplyDisplay(GI * vk)
 		if (RenderResult == VK_ERROR_OUT_OF_DATE_KHR) {
 			// demo->swapchain is out of date (e.g. the window was resized) and
 			// must be recreated:
-			//demo_resize(demo);
+			return -10;
 		} else if (RenderResult == VK_SUBOPTIMAL_KHR) {
 			// demo->swapchain is not as optimal as it could be, but the platform's
 			// presentation engine will still present the image correctly.
@@ -989,7 +998,7 @@ int BuildRawCommand(GI * vk)
 
     // We can use LAYOUT_UNDEFINED as a wildcard here because we don't care what
     // happens to the previous contents of the image
-    /*VkImageMemoryBarrier image_memory_barrier = {
+    VkImageMemoryBarrier image_memory_barrier = {
         .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
         .pNext = NULL,
         .srcAccessMask = 0,
@@ -999,11 +1008,11 @@ int BuildRawCommand(GI * vk)
         .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
         .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
         .image = vk->buffers[vk->currentBuffer].image,
-        .subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1}};*/
+        .subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1}};
 
-    /*vkCmdPipelineBarrier(vk->drawCommand, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+    vkCmdPipelineBarrier(vk->drawCommand, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
                          VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, NULL, 0,
-                         NULL, 1, &image_memory_barrier);*/
+                         NULL, 1, &image_memory_barrier);
     vkCmdBeginRenderPass(vk->drawCommand, &rp_begin, VK_SUBPASS_CONTENTS_INLINE);
     vkCmdBindPipeline(vk->drawCommand, VK_PIPELINE_BIND_POINT_GRAPHICS, vk->pipeline);
     //vkCmdBindDescriptorSets(vk->drawCommand, VK_PIPELINE_BIND_POINT_GRAPHICS, vk->pipelineLayout, 0, 1, &vk->desc_set, 0, NULL);
@@ -1027,14 +1036,14 @@ int BuildRawCommand(GI * vk)
     VkDeviceSize offsets[1] = {0};
     vkCmdBindVertexBuffers(vk->drawCommand, 0, 1, &vk->vertices.buf, offsets);
 
-    vkCmdDraw(vk->drawCommand, 3, 1, 0, 0);
+    vkCmdDraw(vk->drawCommand, sizeof(tri_ver), 1, 0, 0);
     vkCmdEndRenderPass(vk->drawCommand);
 
     if(vkEndCommandBuffer(vk->drawCommand) != VK_SUCCESS) return -1;
 	return 0;
 }
 
-uint32_t findMemoryType(GI * vk,uint32_t typeFilter, VkMemoryPropertyFlags properties) {
+uint32_t FindMemoryType(GI * vk,uint32_t typeFilter, VkMemoryPropertyFlags properties) {
 	VkPhysicalDeviceMemoryProperties memProperties;
 	vkGetPhysicalDeviceMemoryProperties(vk->gpu, &memProperties);//丢到环境里
 
@@ -1049,7 +1058,7 @@ uint32_t findMemoryType(GI * vk,uint32_t typeFilter, VkMemoryPropertyFlags prope
 }
 
 
-int createImage(GI * vk, uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage image, VkDeviceMemory imageMemory) {
+int CreateImage(GI * vk, uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage image, VkDeviceMemory imageMemory) {
     VkImageCreateInfo imageInfo = {
 		.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
 		.imageType = VK_IMAGE_TYPE_2D,
@@ -1076,12 +1085,104 @@ int createImage(GI * vk, uint32_t width, uint32_t height, VkFormat format, VkIma
     VkMemoryAllocateInfo allocInfo = {};
     allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
     allocInfo.allocationSize = memRequirements.size;
-    allocInfo.memoryTypeIndex = findMemoryType(vk, memRequirements.memoryTypeBits, properties);
+    allocInfo.memoryTypeIndex = FindMemoryType(vk, memRequirements.memoryTypeBits, properties);
 
     if (vkAllocateMemory(vk->device, &allocInfo, NULL, &imageMemory) != VK_SUCCESS) {
         return -1;
     }
 
     vkBindImageMemory(vk->device, image, imageMemory, 0);
+	return 0;
+}
+
+int FlushSetupCommand(GI * vk) {
+	if (vk->setupCommand == VK_NULL_HANDLE)
+		return 0;
+
+	if(vkEndCommandBuffer(vk->setupCommand) != VK_SUCCESS) return -1;
+
+	const VkCommandBuffer cmd_bufs[] = {vk->setupCommand};
+	VkFence nullFence = {VK_NULL_HANDLE};
+	VkSubmitInfo submit_info = {.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+								.pNext = NULL,
+								.waitSemaphoreCount = 0,
+								.pWaitSemaphores = NULL,
+								.pWaitDstStageMask = NULL,
+								.commandBufferCount = 1,
+								.pCommandBuffers = cmd_bufs,
+								.signalSemaphoreCount = 0,
+								.pSignalSemaphores = NULL};
+
+	if(vkQueueSubmit(vk->queue, 1, &submit_info, nullFence) != VK_SUCCESS) return -1;
+
+	if(vkQueueWaitIdle(vk->queue) != VK_SUCCESS) return -1;
+
+	vkFreeCommandBuffers(vk->device, vk->commandPool, 1, cmd_bufs);
+	vk->setupCommand = VK_NULL_HANDLE;
+	return 0;
+}
+
+int CreateBuffer(GI * vk, VkDeviceSize uSize, VkBufferUsageFlags uUsage, VkMemoryPropertyFlags uProperties, VkBuffer * buffer, VkDeviceMemory * vBufferMemory)
+{
+	VkMemoryRequirements mem_reqs;
+	
+	VkBufferCreateInfo buf_info = {
+		.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+		.pNext = NULL,
+		.size = uSize,
+		.usage = uUsage,
+		.flags = 0,
+	};
+
+	if (vkCreateBuffer(vk->device, &buf_info, NULL, buffer) != VK_SUCCESS) return -1;
+	vkGetBufferMemoryRequirements(vk->device, *buffer, &mem_reqs);
+	
+	VkMemoryAllocateInfo mem_alloc = {
+		.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
+		.pNext = NULL,
+		.allocationSize = mem_reqs.size,
+		.memoryTypeIndex = FindMemoryType(vk, mem_reqs.memoryTypeBits, uProperties),
+	};
+	
+	if(vkAllocateMemory(vk->device, &mem_alloc, NULL, vBufferMemory) != VK_SUCCESS) return -1;
+
+    if(vkBindBufferMemory(vk->device, *buffer,*vBufferMemory, 0) != VK_SUCCESS) return -1;
+	
+	return 0;
+}
+
+int CopyBuffer(GI * vk,VkBuffer * srcBuffer, VkBuffer * dstBuffer, VkDeviceSize uSize)
+{
+	VkCommandBufferAllocateInfo allocInfo = {};
+	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+	allocInfo.commandPool = vk->commandPool;
+	allocInfo.commandBufferCount = 1;
+
+	VkCommandBuffer commandBuffer;
+	vkAllocateCommandBuffers(vk->device, &allocInfo, &commandBuffer);
+
+	VkCommandBufferBeginInfo beginInfo = {};
+	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+	vkBeginCommandBuffer(commandBuffer, &beginInfo);
+
+		VkBufferCopy copyRegion = {};
+		copyRegion.size = uSize;
+		vkCmdCopyBuffer(commandBuffer, *srcBuffer, *dstBuffer, 1, &copyRegion);
+
+	vkEndCommandBuffer(commandBuffer);
+
+	VkSubmitInfo submitInfo = {};
+	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+	submitInfo.commandBufferCount = 1;
+	submitInfo.pCommandBuffers = &commandBuffer;
+
+	vkQueueSubmit(vk->queue, 1, &submitInfo, VK_NULL_HANDLE);
+	vkQueueWaitIdle(vk->queue);
+
+	vkFreeCommandBuffers(vk->device, vk->commandPool, 1, &commandBuffer);
+	
 	return 0;
 }
